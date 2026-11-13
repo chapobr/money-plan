@@ -2,45 +2,76 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Money Plan</title>
 <style>
-:root{--bg:#f3f5f4;--c:#fff;--t:#14211c;--m:#5b6b64;--a:#1f6f5c;--l:#d8e0dc}
-@media(prefers-color-scheme:dark){:root{--bg:#0d1311;--c:#16201c;--t:#e8f0ec;--m:#93a39b;--a:#5fd4b0;--l:#2a3833}}
+:root{--bg:#f3f5f4;--c:#fff;--t:#14211c;--m:#5b6b64;--a:#1f6f5c;--l:#d8e0dc;--r:#c0392b}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1311;--c:#16201c;--t:#e8f0ec;--m:#93a39b;--a:#5fd4b0;--l:#2a3833;--r:#ff8a80}}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--t);font:16px/1.4 -apple-system,system-ui,sans-serif;padding:calc(env(safe-area-inset-top) + 8px) 14px calc(env(safe-area-inset-bottom) + 28px)}
-h1{font-size:24px;margin:12px 0 2px}h2{font-size:17px;margin:26px 0 8px}
+body{margin:0;background:var(--bg);color:var(--t);font:16px/1.4 -apple-system,system-ui,sans-serif;padding:0 14px calc(env(safe-area-inset-bottom) + 90px)}
+header{position:sticky;top:0;z-index:5;margin:0 -14px;padding:calc(env(safe-area-inset-top) + 8px) 14px 8px;background:var(--bg);border-bottom:1px solid var(--l);display:flex;align-items:center;gap:10px}
+h2{font-size:17px;margin:22px 0 8px}
 .card{background:var(--c);border:1px solid var(--l);border-radius:12px;padding:12px}
 .row{display:flex;gap:8px;align-items:center;margin:6px 0}
 input,select,textarea,button{font:inherit;color:var(--t);background:var(--bg);border:1px solid var(--l);border-radius:8px;padding:9px;min-width:0}
 input[type=checkbox]{width:20px;height:20px;flex:none}
-.g{flex:1}.s{width:84px}
+.g{flex:1}.s{width:76px}
 button{background:var(--a);color:var(--bg);border:0;font-weight:600}
-button.x{background:none;color:var(--m);padding:6px 8px}
-.big{font-size:26px}.m{color:var(--m);font-size:14px}
+button.x{background:none;color:var(--m);padding:6px 9px}
+button.c{background:var(--bg);color:var(--t);border:1px solid var(--l);flex:1}
+button.c.on{border-color:var(--a);color:var(--a)}
+.big{font-size:24px}.m{color:var(--m);font-size:14px}
 .tot{display:flex;justify-content:space-between;align-items:center;padding:5px 0}
+.v{display:none}.v.on{display:block}
 textarea{width:100%;height:90px}
+.bar{height:6px;background:var(--bg);border-radius:3px;margin-bottom:6px}.bar i{display:block;height:100%;border-radius:3px;background:var(--a)}
+#dr{position:fixed;inset:0;display:none;z-index:9}#dr.o{display:flex}
+#dr nav{width:250px;background:var(--c);border-right:1px solid var(--l);padding:calc(env(safe-area-inset-top) + 16px) 10px}
+#dr .ov{flex:1;background:rgba(0,0,0,.45)}
+nav button{display:block;width:100%;text-align:left;background:none;color:var(--t);padding:14px 10px;font-size:17px;font-weight:500}
+nav button.on{background:var(--bg);color:var(--a)}
+#to{position:fixed;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom) + 16px);background:var(--t);color:var(--bg);padding:10px 14px;border-radius:10px;display:none;justify-content:space-between;align-items:center;z-index:12}
 </style></head><body>
-<h1>Money Plan</h1><div class="m">Saved automatically on this device.</div>
+<header><button class="x" onclick="dr(1)" style="font-size:24px;color:var(--t)">☰</button><b id="vt" class="g" style="font-size:18px">Overview</b><div style="text-align:right;line-height:1.2"><b id="h1"></b><div class="m" id="h2"></div></div></header>
+<div id="dr"><nav id="nv"></nav><div class="ov" onclick="dr(0)"></div></div>
 
-<h2>Monthly bills</h2><div class="card"><div id="bills"></div><button onclick="addB()">Add bill</button>
+<section class="v on" id="v-ov"><h2>Every month</h2><div class="card">
+<div class="tot"><span>Bills</span><b id="o1"></b></div><div class="tot"><span>Food</span><b id="o2"></b></div><div class="tot"><span>Bills and food</span><b class="big" id="o3"></b></div></div>
+<h2>Next payment</h2><div class="card" id="o4"></div>
+<div class="row" style="margin-top:14px"><button class="g" onclick="cn()">Copy as note</button></div></section>
+
+<section class="v" id="v-bl"><h2>Monthly bills</h2><div class="card"><div id="bills"></div><button onclick="addB()">Add bill</button>
 <div class="row" style="margin-top:14px"><select id="band" class="g" onchange="S.ct.band=this.value;calc()"></select><label class="row m"><input type="checkbox" id="disc" onchange="S.ct.disc=this.checked;calc()">25% off</label></div>
+<label class="row m"><input type="checkbox" id="cte" onchange="S.ct.e=this.checked;calc()">Band is a guess</label>
 <div class="tot"><span class="m">Council tax per month</span><b id="ctv"></b></div>
-<div class="tot"><span>Total per month</span><b class="big" id="tot"></b></div></div>
+<div class="tot"><span>Total bills</span><b class="big" id="tot"></b></div></div>
+<h2>Food</h2><div class="card"><div class="row"><button class="c" data-w="80" onclick="fw(80)">Lean</button><button class="c" data-w="95" onclick="fw(95)">Typical</button><button class="c" data-w="130" onclick="fw(130)">Takeaways</button></div>
+<div class="row"><span class="g">Weekly food budget</span><input id="fw" class="s" type="number" inputmode="decimal" onfocus="this.select()" oninput="S.food=this.value;calc()"></div>
+<div class="tot"><span class="m">Food per month</span><b id="fm"></b></div></div></section>
 
-<h2>Payments</h2><div class="card"><div id="pay"></div><button onclick="addP()">Add payment</button>
-<div class="row" style="margin-top:14px"><span class="g">Summer months with no payment</span><input id="pot" class="s" type="number" inputmode="numeric" oninput="S.pot=+this.value||0;calc()"></div>
-<div class="tot"><span class="m">Summer pot</span><b id="potv"></b></div><div id="res"></div></div>
+<section class="v" id="v-pm"><h2>Payments</h2><div class="card"><div id="pay"></div><button onclick="addP()">Add payment</button>
+<div class="row" style="margin-top:14px"><span class="g">Summer starts</span><input type="date" id="su" oninput="S.summer=this.value;calc()"></div>
+<div class="row"><span class="g">Next payment after these</span><input type="date" id="nx" oninput="S.next=this.value;calc()"></div>
+<div class="tot"><span class="m">Summer pot</span><b id="potv"></b></div><div class="m" id="hint"></div><div id="res"></div></div></section>
 
-<h2>To do</h2><div class="card"><div id="todo"></div><div class="row"><input id="nt" class="g" placeholder="New task"><button onclick="addT()">Add task</button></div></div>
+<section class="v" id="v-ba"><h2>Month by month balance</h2><div class="card" id="rw"></div><div class="m" style="margin-top:8px">Starts at your first payment and falls by bills plus food each month.</div></section>
 
-<h2>Backup</h2><div class="card"><textarea id="bk" placeholder="Export puts your data here. Paste saved data here to import it."></textarea>
-<div class="row"><button class="g" onclick="ex()">Export</button><button class="g" onclick="im()">Import</button></div></div>
+<section class="v" id="v-td"><h2>To do</h2><div class="card"><div id="todo"></div><div class="row"><input id="nt" class="g" placeholder="New task"><button onclick="addT()">Add task</button></div></div></section>
 
+<section class="v" id="v-bk"><h2>Backup</h2><div class="card"><textarea id="bk" placeholder="Export puts your data here. Paste saved data here to import it."></textarea>
+<div class="row"><button class="g" onclick="ex()">Export</button><button class="g" onclick="im()">Import</button></div></div></section>
+
+<div id="to"><span id="tm"></span><button id="tu" class="x" style="color:var(--bg)">Undo</button></div>
 <script>
 const BANDS={A:1405.13,B:1639.31,C:1873.51,D:2107.69,E:2576.07,F:3044.44,G:3512.82,H:4215.38};
-const K='moneyplan',D=()=>({bills:[],ct:{band:'',disc:true},pay:[],pot:5,todos:[]});
+const V=[['ov','Overview'],['bl','Bills and food'],['pm','Payments'],['ba','Month by month'],['td','To do'],['bk','Backup']];
+const K='moneyplan',D=()=>({bills:[],ct:{band:'',disc:true,e:true},pay:[],food:'',summer:'',next:'',todos:[]});
 let S=D();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const f=n=>'£'+(n||0).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+const f0=n=>'£'+Math.round(n||0).toLocaleString('en-GB');
+const fd=s=>s?new Date(s).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'No date';
+const pd=s=>{const[a,b,c]=s.split('-').map(Number);return{y:a,m:b,d:c}};
+const md=(a,b)=>{const x=pd(a),z=pd(b);return Math.max(0,(z.y-x.y)*12+z.m-x.m+(z.d>1?1:0))};
+const mo=b=>(+b.a||0)*(b.p==='w'?52/12:1);
 const PF=()=>window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Preferences;
 async function load(){let r=null;
  try{const p=PF();if(p)r=(await p.get({key:K})).value}catch(e){}
@@ -49,26 +80,55 @@ async function load(){let r=null;
 async function save(){const j=JSON.stringify(S);
  try{localStorage.setItem(K,j)}catch(e){}
  try{const p=PF();if(p)await p.set({key:K,value:j})}catch(e){}}
-const mo=b=>(+b.a||0)*(b.p==='w'?52/12:1);
-function rB(){$('bills').innerHTML=S.bills.map((b,i)=>`<div class="row"><input class="g" placeholder="Bill" value="${esc(b.n)}" oninput="S.bills[${i}].n=this.value;calc()"><input class="s" type="number" inputmode="decimal" placeholder="£" value="${esc(b.a)}" oninput="S.bills[${i}].a=this.value;calc()"><select onchange="S.bills[${i}].p=this.value;calc()"><option value="m"${b.p=='m'?' selected':''}>/mo</option><option value="w"${b.p=='w'?' selected':''}>/wk</option></select><button class="x" onclick="S.bills.splice(${i},1);rB();calc()">✕</button></div>`).join('')}
-function rP(){$('pay').innerHTML=S.pay.map((p,i)=>`<div class="row"><input type="date" class="g" value="${esc(p.d)}" oninput="S.pay[${i}].d=this.value;calc()"><input class="s" type="number" inputmode="decimal" placeholder="£" value="${esc(p.a)}" oninput="S.pay[${i}].a=this.value;calc()"><input class="s" type="number" inputmode="numeric" placeholder="months" value="${esc(p.m)}" oninput="S.pay[${i}].m=this.value;calc()"><button class="x" onclick="S.pay.splice(${i},1);rP();calc()">✕</button></div>`).join('')+(S.pay.length?'<div class="m" style="margin-bottom:8px">Date, amount, months this payment must cover</div>':'')}
-function rT(){$('todo').innerHTML=S.todos.map((t,i)=>`<div class="row"><input type="checkbox" ${t.k?'checked':''} onchange="S.todos[${i}].k=this.checked;rT();save()"><span class="g" style="${t.k?'text-decoration:line-through;color:var(--m)':''}">${esc(t.t)}</span><button class="x" onclick="S.todos.splice(${i},1);rT();save()">✕</button></div>`).join('')}
-function calc(){
+function dr(o){$('dr').classList.toggle('o',!!o)}
+function go(k){V.forEach(([i,n])=>{$('v-'+i).classList.toggle('on',i==k);if(i==k)$('vt').textContent=n});
+ $('nv').innerHTML=V.map(([i,n])=>`<button class="${i==k?'on':''}" onclick="go('${i}')">${n}</button>`).join('');dr(0);scrollTo(0,0)}
+let tt;function toast(m,u){$('tm').textContent=m;$('tu').style.display=u?'':'none';$('tu').onclick=()=>{u&&u();$('to').style.display='none'};$('to').style.display='flex';clearTimeout(tt);tt=setTimeout(()=>$('to').style.display='none',5000)}
+function del(k,i,r){const[x]=S[k].splice(i,1);r();calc();toast('Deleted',()=>{S[k].splice(i,0,x);r();calc()})}
+function fl(id,n){const r=$(id).lastElementChild;if(r)r.querySelectorAll('input')[n].focus()}
+function M(){
  const ctM=S.ct.band?BANDS[S.ct.band]/12*(S.ct.disc?.75:1):0;
- const t=S.bills.reduce((s,b)=>s+mo(b),0)+ctM;
- $('ctv').textContent=f(ctM);$('tot').textContent=f(t);
- const pot=t*S.pot,n=S.pay.length||1;$('potv').textContent=f(pot);
- $('res').innerHTML=S.pay.map(p=>{const s=t*(+p.m||0)+pot/n,l=(+p.a||0)-s;
-  const d=p.d?new Date(p.d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Payment';
-  return `<div class="tot"><span>${d}<br><span class="m">Set aside ${f(s)}</span></span><b>${f(l)} left</b></div>`}).join('');
+ const bt=S.bills.reduce((s,b)=>s+mo(b),0)+ctM,fm=(+S.food||0)*52/12,tf=bt+fm;
+ const P=S.pay.filter(p=>p.d).sort((a,b)=>a.d<b.d?-1:1);
+ const sm=S.summer&&S.next?md(S.summer,S.next):0,pot=bt*sm;
+ const R=P.map((p,i)=>{const e=i<P.length-1?P[i+1].d:S.summer,m=e?md(p.d,e):0,s=bt*m+pot/P.length;return{p,m,s,l:(+p.a||0)-s}});
+ return{ctM,bt,fm,tf,sm,pot,R,P}}
+function rB(){$('bills').innerHTML=S.bills.map((b,i)=>`<div class="row"><input class="g" placeholder="Bill" value="${esc(b.n)}" oninput="S.bills[${i}].n=this.value;calc()"><input class="s" type="number" inputmode="decimal" placeholder="£" value="${esc(b.a)}" onfocus="this.select()" oninput="S.bills[${i}].a=this.value;calc()"><select onchange="S.bills[${i}].p=this.value;calc()"><option value="m"${b.p=='m'?' selected':''}>/mo</option><option value="w"${b.p=='w'?' selected':''}>/wk</option></select><button class="x" style="${b.e?'color:var(--a);font-weight:700':''}" onclick="S.bills[${i}].e=!S.bills[${i}].e;rB();calc()">?</button><button class="x" onclick="del('bills',${i},rB)">✕</button></div>`).join('')}
+function rP(){$('pay').innerHTML=S.pay.map((p,i)=>`<div class="row"><input type="date" class="g" value="${esc(p.d)}" oninput="S.pay[${i}].d=this.value;calc()"><input class="s" type="number" inputmode="decimal" placeholder="£" value="${esc(p.a)}" onfocus="this.select()" oninput="S.pay[${i}].a=this.value;calc()"><button class="x" onclick="del('pay',${i},rP)">✕</button></div>`).join('')}
+function rT(){$('todo').innerHTML=S.todos.map((t,i)=>`<div class="row"><input type="checkbox" ${t.k?'checked':''} onchange="S.todos[${i}].k=this.checked;rT();save()"><span class="g" style="${t.k?'text-decoration:line-through;color:var(--m)':''}">${esc(t.t)}</span><button class="x" onclick="del('todos',${i},rT)">✕</button></div>`).join('')}
+function calc(){const m=M();
+ $('ctv').textContent=f(m.ctM);$('tot').textContent=f(m.bt);$('fm').textContent=f(m.fm);
+ $('h1').textContent=f0(m.bt)+' bills';$('h2').textContent=f0(m.tf)+' with food';
+ $('o1').textContent=f(m.bt);$('o2').textContent=f(m.fm);$('o3').textContent=f(m.tf);
+ document.querySelectorAll('button.c').forEach(b=>b.classList.toggle('on',+b.dataset.w==+S.food));
+ $('potv').textContent=f(m.pot);
+ $('hint').textContent=S.summer&&S.next?'':'Add the summer start and next payment dates to work out your summer pot.';
+ $('res').innerHTML=m.R.map(r=>`<div class="tot"><span>${fd(r.p.d)}<br><span class="m">Set aside ${f(r.s)} (${r.m} months plus pot share)</span></span><b style="color:${r.l<0?'var(--r)':'inherit'}">${f(r.l)} left</b></div>`).join('');
+ const t=new Date().toISOString().slice(0,10),n=m.R.find(r=>r.p.d>=t)||m.R[0];
+ $('o4').innerHTML=n?`<div class="tot"><span>${fd(n.p.d)}</span><b class="big">${f(+n.p.a||0)}</b></div><div class="tot"><span class="m">Set aside for bills</span><b>${f(n.s)}</b></div><div class="tot"><span class="m">Left for everything else</span><b>${f(n.l)}</b></div>`:'<span class="m">Add a payment on the Payments page.</span>';
+ let rows=[];if(m.P.length){const a=pd(m.P[0].d),k0=a.y*12+a.m-1,len=S.next?md(m.P[0].d,S.next):12;let b=0;
+  for(let i=0;i<len;i++){m.P.forEach(p=>{const q=pd(p.d);if(q.y*12+q.m-1==k0+i)b+=+p.a||0});b-=m.tf;
+   rows.push({l:new Date(a.y,a.m-1+i,1).toLocaleDateString('en-GB',{month:'short',year:'2-digit'}),b})}}
+ const mx=Math.max(1,...rows.map(r=>Math.abs(r.b)));
+ $('rw').innerHTML=rows.length?rows.map(r=>`<div class="tot"><span>${r.l}</span><b style="color:${r.b<0?'var(--r)':'inherit'}">${f0(r.b)}</b></div><div class="bar"><i style="width:${Math.abs(r.b)/mx*100}%;background:${r.b<0?'var(--r)':'var(--a)'}"></i></div>`).join(''):'<span class="m">Add a payment to see your balance month by month.</span>';
  save()}
+function note(){const m=M();let t='House Bills ('+new Date().toLocaleDateString('en-GB',{month:'short',year:'numeric'})+')\nBills\n';
+ S.bills.forEach(b=>t+=(b.n||'Bill')+': '+(+b.a||0)+(b.p=='w'?' per week':'')+(b.e?'?':'')+'\n');
+ if(S.ct.band)t+='Council tax (Band '+S.ct.band+'): '+Math.round(m.ctM)+(S.ct.e?'?':'')+'\n';
+ t+='Total: '+f0(m.bt)+'\nBills + Food: '+f0(m.tf)+'\nFood per month: ~'+f0(m.fm)+'\n\nSFE Payments\nSummer pot = '+m.sm+' months x '+f0(m.bt)+' = '+f0(m.pot)+'\n';
+ m.R.forEach(r=>t+='- '+fd(r.p.d)+': '+f(+r.p.a||0)+'\n  Set aside '+f0(r.s)+' ('+r.m+' months of bills + '+f0(m.pot/m.P.length)+' summer pot)\n  Left for everything else: '+f0(r.l)+'\n');
+ return t}
+async function cp(t){try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('Copied')}
+const cn=()=>cp(note());
+function fw(w){S.food=String(w);$('fw').value=w;calc()}
+function addB(){S.bills.push({n:'',a:'',p:'m',e:false});rB();calc();fl('bills',0)}
+function addP(){S.pay.push({d:'',a:''});rP();calc();fl('pay',1)}
 function addT(){const v=$('nt').value.trim();if(!v)return;S.todos.push({t:v,k:false});$('nt').value='';rT();save()}
-function addB(){S.bills.push({n:'',a:'',p:'m'});rB();calc()}
-function addP(){S.pay.push({d:'',a:'',m:''});rP();calc()}
-function ex(){const v=JSON.stringify(S);$('bk').value=v;$('bk').select();try{navigator.clipboard.writeText(v)}catch(e){}}
+function ex(){const v=JSON.stringify(S);$('bk').value=v;$('bk').select();cp(v)}
 function im(){try{S=Object.assign(D(),JSON.parse($('bk').value));draw();save()}catch(e){alert('That is not saved Money Plan data. Paste the full exported text.')}}
 function draw(){
  $('band').innerHTML='<option value="">Council tax band</option>'+Object.keys(BANDS).map(k=>`<option value="${k}"${S.ct.band==k?' selected':''}>Band ${k}, ${f(BANDS[k])} a year</option>`).join('');
- $('disc').checked=!!S.ct.disc;$('pot').value=S.pot;rB();rP();rT();calc()}
+ $('disc').checked=!!S.ct.disc;$('cte').checked=!!S.ct.e;$('fw').value=S.food;$('su').value=S.summer;$('nx').value=S.next;
+ rB();rP();rT();calc();go('ov')}
 load().then(draw);
 </script></body></html>
