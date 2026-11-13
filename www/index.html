@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="en-GB"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Money Plan</title>
+<style>
+:root{--bg:#f3f5f4;--c:#fff;--t:#14211c;--m:#5b6b64;--a:#1f6f5c;--l:#d8e0dc}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1311;--c:#16201c;--t:#e8f0ec;--m:#93a39b;--a:#5fd4b0;--l:#2a3833}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--t);font:16px/1.4 -apple-system,system-ui,sans-serif;padding:calc(env(safe-area-inset-top) + 8px) 14px calc(env(safe-area-inset-bottom) + 28px)}
+h1{font-size:24px;margin:12px 0 2px}h2{font-size:17px;margin:26px 0 8px}
+.card{background:var(--c);border:1px solid var(--l);border-radius:12px;padding:12px}
+.row{display:flex;gap:8px;align-items:center;margin:6px 0}
+input,select,textarea,button{font:inherit;color:var(--t);background:var(--bg);border:1px solid var(--l);border-radius:8px;padding:9px;min-width:0}
+input[type=checkbox]{width:20px;height:20px;flex:none}
+.g{flex:1}.s{width:84px}
+button{background:var(--a);color:var(--bg);border:0;font-weight:600}
+button.x{background:none;color:var(--m);padding:6px 8px}
+.big{font-size:26px}.m{color:var(--m);font-size:14px}
+.tot{display:flex;justify-content:space-between;align-items:center;padding:5px 0}
+textarea{width:100%;height:90px}
+</style></head><body>
+<h1>Money Plan</h1><div class="m">Saved automatically on this device.</div>
+
+<h2>Monthly bills</h2><div class="card"><div id="bills"></div><button onclick="addB()">Add bill</button>
+<div class="row" style="margin-top:14px"><select id="band" class="g" onchange="S.ct.band=this.value;calc()"></select><label class="row m"><input type="checkbox" id="disc" onchange="S.ct.disc=this.checked;calc()">25% off</label></div>
+<div class="tot"><span class="m">Council tax per month</span><b id="ctv"></b></div>
+<div class="tot"><span>Total per month</span><b class="big" id="tot"></b></div></div>
+
+<h2>Payments</h2><div class="card"><div id="pay"></div><button onclick="addP()">Add payment</button>
+<div class="row" style="margin-top:14px"><span class="g">Summer months with no payment</span><input id="pot" class="s" type="number" inputmode="numeric" oninput="S.pot=+this.value||0;calc()"></div>
+<div class="tot"><span class="m">Summer pot</span><b id="potv"></b></div><div id="res"></div></div>
+
+<h2>To do</h2><div class="card"><div id="todo"></div><div class="row"><input id="nt" class="g" placeholder="New task"><button onclick="addT()">Add task</button></div></div>
+
+<h2>Backup</h2><div class="card"><textarea id="bk" placeholder="Export puts your data here. Paste saved data here to import it."></textarea>
+<div class="row"><button class="g" onclick="ex()">Export</button><button class="g" onclick="im()">Import</button></div></div>
+
+<script>
+const BANDS={A:1405.13,B:1639.31,C:1873.51,D:2107.69,E:2576.07,F:3044.44,G:3512.82,H:4215.38};
+const K='moneyplan',D=()=>({bills:[],ct:{band:'',disc:true},pay:[],pot:5,todos:[]});
+let S=D();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f=n=>'£'+(n||0).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+const PF=()=>window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Preferences;
+async function load(){let r=null;
+ try{const p=PF();if(p)r=(await p.get({key:K})).value}catch(e){}
+ if(!r)try{r=localStorage.getItem(K)}catch(e){}
+ if(r)try{S=Object.assign(D(),JSON.parse(r))}catch(e){}}
+async function save(){const j=JSON.stringify(S);
+ try{localStorage.setItem(K,j)}catch(e){}
+ try{const p=PF();if(p)await p.set({key:K,value:j})}catch(e){}}
+const mo=b=>(+b.a||0)*(b.p==='w'?52/12:1);
+function rB(){$('bills').innerHTML=S.bills.map((b,i)=>`<div class="row"><input class="g" placeholder="Bill" value="${esc(b.n)}" oninput="S.bills[${i}].n=this.value;calc()"><input class="s" type="number" inputmode="decimal" placeholder="£" value="${esc(b.a)}" oninput="S.bills[${i}].a=this.value;calc()"><select onchange="S.bills[${i}].p=this.value;calc()"><option value="m"${b.p=='m'?' selected':''}>/mo</option><option value="w"${b.p=='w'?' selected':''}>/wk</option></select><button class="x" onclick="S.bills.splice(${i},1);rB();calc()">✕</button></div>`).join('')}
+function rP(){$('pay').innerHTML=S.pay.map((p,i)=>`<div class="row"><input type="date" class="g" value="${esc(p.d)}" oninput="S.pay[${i}].d=this.value;calc()"><input class="s" type="number" inputmode="decimal" placeholder="£" value="${esc(p.a)}" oninput="S.pay[${i}].a=this.value;calc()"><input class="s" type="number" inputmode="numeric" placeholder="months" value="${esc(p.m)}" oninput="S.pay[${i}].m=this.value;calc()"><button class="x" onclick="S.pay.splice(${i},1);rP();calc()">✕</button></div>`).join('')+(S.pay.length?'<div class="m" style="margin-bottom:8px">Date, amount, months this payment must cover</div>':'')}
+function rT(){$('todo').innerHTML=S.todos.map((t,i)=>`<div class="row"><input type="checkbox" ${t.k?'checked':''} onchange="S.todos[${i}].k=this.checked;rT();save()"><span class="g" style="${t.k?'text-decoration:line-through;color:var(--m)':''}">${esc(t.t)}</span><button class="x" onclick="S.todos.splice(${i},1);rT();save()">✕</button></div>`).join('')}
+function calc(){
+ const ctM=S.ct.band?BANDS[S.ct.band]/12*(S.ct.disc?.75:1):0;
+ const t=S.bills.reduce((s,b)=>s+mo(b),0)+ctM;
+ $('ctv').textContent=f(ctM);$('tot').textContent=f(t);
+ const pot=t*S.pot,n=S.pay.length||1;$('potv').textContent=f(pot);
+ $('res').innerHTML=S.pay.map(p=>{const s=t*(+p.m||0)+pot/n,l=(+p.a||0)-s;
+  const d=p.d?new Date(p.d).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'Payment';
+  return `<div class="tot"><span>${d}<br><span class="m">Set aside ${f(s)}</span></span><b>${f(l)} left</b></div>`}).join('');
+ save()}
+function addT(){const v=$('nt').value.trim();if(!v)return;S.todos.push({t:v,k:false});$('nt').value='';rT();save()}
+function addB(){S.bills.push({n:'',a:'',p:'m'});rB();calc()}
+function addP(){S.pay.push({d:'',a:'',m:''});rP();calc()}
+function ex(){const v=JSON.stringify(S);$('bk').value=v;$('bk').select();try{navigator.clipboard.writeText(v)}catch(e){}}
+function im(){try{S=Object.assign(D(),JSON.parse($('bk').value));draw();save()}catch(e){alert('That is not saved Money Plan data. Paste the full exported text.')}}
+function draw(){
+ $('band').innerHTML='<option value="">Council tax band</option>'+Object.keys(BANDS).map(k=>`<option value="${k}"${S.ct.band==k?' selected':''}>Band ${k}, ${f(BANDS[k])} a year</option>`).join('');
+ $('disc').checked=!!S.ct.disc;$('pot').value=S.pot;rB();rP();rT();calc()}
+load().then(draw);
+</script></body></html>
